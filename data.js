@@ -327,16 +327,46 @@ const POTIONS = [
     isBox: true, boxSize: 3,
     description: '包含3支随机药剂（不含药剂箱）'
   },
+
+  // ---------- 至臻药剂 (Supreme Potions) ----------
   {
-    id: 35, name: '药剂箱（小）', potionRarity: 'rare',
-    targetType: 'box', minTargets: 0, maxTargets: 0,
-    isBox: true, boxSize: 3,
-    description: '包含3支随机药剂（不含药剂箱）'
+    id: 35, name: '复方焕生丸剂', potionRarity: 'supreme',
+    targetType: 'none', minTargets: 0, maxTargets: 0,
+    description: '将所有怪物变异为随机异魔并+11活性，魔法异魔额外+11活性，稀有和首领异魔额外+11数量'
+  },
+  {
+    id: 36, name: '速效强心剂', potionRarity: 'supreme',
+    targetType: 'none', minTargets: 0, maxTargets: 0,
+    description: '选择总活性最低的1组怪物，使其活性+42，数量+42'
+  },
+  {
+    id: 37, name: '疫区泥炭敷料', potionRarity: 'supreme',
+    targetType: 'none', minTargets: 0, maxTargets: 0,
+    description: '至少拥有1组骨卫兵时，移除所有非骨卫兵怪物，每移除1组，使所有骨卫兵+20活性+39数量'
+  },
+  {
+    id: 38, name: '诱虫剂', potionRarity: 'supreme',
+    targetType: 'none', minTargets: 0, maxTargets: 0,
+    description: '添加4组蛊虫；每超出1组，使已有蛊虫活性+10，数量+15'
+  },
+  {
+    id: 39, name: '至纯圣水', potionRarity: 'supreme',
+    targetType: 'none', minTargets: 0, maxTargets: 0,
+    description: '所有觉醒者觉醒为高2阶稀有度的怪物，如果稀有度为首领则变异为随机首领觉醒者'
   }
 ];
 
 /** 非药剂箱的药剂列表（用于药剂箱内再次抽取） */
 const POTIONS_NO_BOX = POTIONS.filter(p => !p.isBox);
+
+/** 普通药剂池（非至臻、非药剂箱） */
+const POTIONS_NORMAL = POTIONS.filter(p => !p.isBox && p.potionRarity !== 'supreme');
+
+/** 至臻药剂池 */
+const POTIONS_SUPREME = POTIONS.filter(p => p.potionRarity === 'supreme');
+
+/** 至臻药剂抽取概率（每张卡特1%概率抽到至臻） */
+const SUPREME_CHANCE = 0.01;
 
 // =====================================================================
 // ===== 手术用具数据定义 (Surgical Tool Definitions) =====
@@ -350,7 +380,7 @@ const TOOLS = [
   },
   {
     id: 2, name: '孵化囊', pool: 'basic',
-    description: '拥有至少2组蛊虫时，每次添加怪物时，使所有怪物+45活性'
+    description: '拥有至少2组蛊虫时，每次添加怪物时，使所有怪物+45数量'
   },
   {
     id: 3, name: '增生前额叶', pool: 'basic',
