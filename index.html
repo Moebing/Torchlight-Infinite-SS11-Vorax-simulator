@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="异魔培养模拟器 - 卡牌策略小游戏，通过药剂与手术用具培养最强怪物">
+  <title>异魔培养模拟器 | Monster Cultivation Simulator</title>
+  <link rel="stylesheet" href="index.css">
+</head>
+<body>
+  <!-- ===== Debug切换按钮 ===== -->
+  <button id="debug-toggle" onclick="toggleDebug()">⚙ DEBUG</button>
+
+  <!-- ===== Debug面板（左侧可折叠） ===== -->
+  <div id="debug-panel">
+    <!-- 由 debug.js 动态填充 -->
+  </div>
+
+  <!-- ===== 游戏结束覆盖层 ===== -->
+  <div id="game-over-overlay">
+    <div class="game-over-content">
+      <div class="game-over-title">实验完成</div>
+      <div>最终总活性</div>
+      <div class="game-over-score" id="final-score">0</div>
+      <button class="restart-btn" onclick="restartGame()">重新开始实验</button>
+    </div>
+  </div>
+
+  <!-- ===== 主应用容器 ===== -->
+  <div id="app">
+    <!-- 顶部控制台 -->
+    <header id="header">
+      <div class="header-title">◈ 异魔培养模拟器 ◈</div>
+      <div class="header-stats">
+        <div class="stat-item">
+          <span class="stat-label">回合</span>
+          <span class="stat-value" id="round-display">1/10</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">药剂刷新</span>
+          <span class="stat-value" id="potion-refresh-display">3</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">工具刷新</span>
+          <span class="stat-value" id="tool-refresh-display">0</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">总活性</span>
+          <span class="stat-value score" id="total-activity-display">0</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- 主内容区 -->
+    <div id="main-content">
+      <!-- 阶段提示条 -->
+      <div id="phase-banner">
+        <span class="phase-dot"></span>
+        <span id="phase-text">初始化中...</span>
+      </div>
+
+      <!-- 培养皿矩阵 -->
+      <div id="dishes-container">
+        <!-- 由 ui.js 动态生成 6 个培养皿 -->
+      </div>
+
+      <!-- 卡牌区域 -->
+      <div id="cards-container">
+        <div class="cards-header">
+          <div class="cards-title">
+            <span id="cards-title-text">选择卡牌</span>
+          </div>
+          <button class="refresh-btn" id="refresh-btn" onclick="onRefreshClicked()" disabled>
+            🔄 刷新 (<span id="refresh-count">0</span>)
+          </button>
+        </div>
+        <div id="cards-grid">
+          <!-- 由 ui.js 动态生成卡牌 -->
+        </div>
+        <button id="confirm-btn" onclick="onConfirmClicked()">✓ 确认选择</button>
+      </div>
+
+      <!-- 日志面板 -->
+      <div class="sidebar-section">
+        <div class="sidebar-title">📋 操作日志</div>
+        <div id="log-panel"></div>
+      </div>
+    </div>
+
+    <!-- 右侧手术台 -->
+    <aside id="sidebar">
+      <div class="sidebar-section">
+        <div class="sidebar-title">🔧 已装备手术用具</div>
+        <div id="tools-list">
+          <div class="empty-tools">暂无已装备的手术用具</div>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <!-- 脚本加载顺序：数据层 → 引擎层 → UI层 → Debug层 -->
+  <script src="data.js"></script>
+  <script src="engine.js"></script>
+  <script src="ui.js"></script>
+  <script src="debug.js"></script>
+</body>
+</html>
