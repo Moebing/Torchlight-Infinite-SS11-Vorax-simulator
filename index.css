@@ -486,6 +486,16 @@ body::before {
 .card-rarity.rare { background: var(--rarity-rare-bg); color: var(--rarity-rare); }
 .card-rarity.magic { background: var(--rarity-magic-bg); color: var(--rarity-magic); }
 .card-rarity.common { background: var(--rarity-common-bg); color: var(--rarity-common); }
+.card-rarity.supreme {
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(255, 140, 0, 0.2));
+  color: #ffd700;
+  text-shadow: 0 0 8px rgba(255, 215, 0, 0.4);
+}
+
+.card.potion-card:has(.card-rarity.supreme) {
+  border-left: 3px solid #ffd700;
+  box-shadow: 0 0 15px rgba(255, 215, 0, 0.1);
+}
 
 .card-desc {
   font-size: 0.7rem;
