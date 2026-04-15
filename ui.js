@@ -209,6 +209,7 @@ function renderCards(state) {
       let rarityBadge = '';
       if (card.potionRarity) {
         rarityBadge = `<span class="card-rarity ${card.potionRarity}">${
+          card.potionRarity === 'supreme' ? '至臻药剂' :
           card.potionRarity === 'rare' ? '稀有药剂' :
           card.potionRarity === 'magic' ? '魔法药剂' : '普通药剂'
         }</span>`;
