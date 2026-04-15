@@ -522,14 +522,38 @@ class GameEngine {
   }
 
   /**
-   * 抽取药剂（无放回抽取，同次抽取不重复）
+   * 抽取药剂（带至臻概率控制，无放回抽取）
+   * 每张卡有1%概率抽到至臻药剂，99%概率抽到普通/魔法/稀有药剂
    * @param {number} count 抽取数量
    * @param {boolean} excludeBoxes 是否排除药剂箱
    */
   _drawPotions(count, excludeBoxes) {
-    const pool = excludeBoxes ? POTIONS_NO_BOX : POTIONS;
-    // 无放回抽取（同次抽出的药剂不会重复）
-    this.currentCards = randomSample(pool, Math.min(count, pool.length)).map(p => ({ ...p }));
+    const normalPool = excludeBoxes
+      ? POTIONS_NORMAL.filter(p => !p.isBox)  // 药剂箱内抽取：排除药剂箱和至臻
+      : POTIONS.filter(p => p.potionRarity !== 'supreme');  // 普通抽取：包含药剂箱，排除至臻
+    const supremePool = POTIONS_SUPREME;
+
+    const drawn = [];
+    const usedIds = new Set();
+
+    for (let i = 0; i < count; i++) {
+      let pool;
+      // 每张卡特1%概率抽到至臻药剂
+      if (supremePool.length > 0 && Math.random() < SUPREME_CHANCE) {
+        pool = supremePool.filter(p => !usedIds.has(p.id));
+        if (pool.length === 0) pool = normalPool.filter(p => !usedIds.has(p.id));
+      } else {
+        pool = normalPool.filter(p => !usedIds.has(p.id));
+        if (pool.length === 0) pool = supremePool.filter(p => !usedIds.has(p.id));
+      }
+
+      if (pool.length === 0) break;
+      const chosen = pool[Math.floor(Math.random() * pool.length)];
+      drawn.push({ ...chosen });
+      usedIds.add(chosen.id);
+    }
+
+    this.currentCards = drawn;
   }
 
   // =====================================================================
@@ -1147,8 +1171,106 @@ class GameEngine {
         for (let i = 0; i < 2; i++) {
           this._addMonster(randomSpecies(), RARITY.MAGIC, 0, 25);
         }
+      },
+
+      // ===== 至臻药剂 (Supreme Potions) =====
+
+      // [35] 复方焕生丸剂 - 所有怪物变异为随机异魔+11活性，魔法异魔额外+11活性，稀有/首领异魔额外+11数量
+      35: function (targets) {
+        for (const idx of this._getNonEmptyDishIndices()) {
+          this._mutateMonster(idx, SPECIES.YIMO, null); // 变异为异魔，保留稀有度
+          const m = this.dishes[idx];
+          if (!m) continue;
+          m.activity += 11;
+          if (m.rarity === RARITY.MAGIC) {
+            m.activity += 11; // 魔法异魔额外+11活性
+          } else if (m.rarity === RARITY.RARE || m.rarity === RARITY.BOSS) {
+            m.quantity += 11; // 稀有/首领异魔额外+11数量
+          }
+        }
+        this._log(`复方焕生丸剂: 所有怪物变异为异魔并获得加成`);
+      },
+
+      // [36] 速效强心剂 - 总活性最低的1组+42活性+42数量
+      36: function (targets) {
+        const lowest = this._getLowestTotalDish();
+        if (lowest < 0) return;
+        this.dishes[lowest].activity += 42;
+        this.dishes[lowest].quantity += 42;
+        this._log(`速效强心剂: ${lowest + 1}号怪物+42活性+42数量`);
+      },
+
+      // [37] 疫区泥炭敷料 - 有1组骨卫兵时，移除所有非骨卫兵，每移除1组全体骨卫兵+20活性+39数量
+      37: function (targets) {
+        const guweiDishes = this._getDishesBySpecies(SPECIES.GUWEBING);
+        if (guweiDishes.length === 0) return;
+        const nonGuwei = this._getNonEmptyDishIndices().filter(
+          i => this.dishes[i].species !== SPECIES.GUWEBING
+        );
+        let removedCount = 0;
+        for (const idx of nonGuwei) {
+          this._removeMonster(idx);
+          removedCount++;
+          // 每移除1组，所有骨卫兵+20活性+39数量
+          for (const gi of this._getDishesBySpecies(SPECIES.GUWEBING)) {
+            this.dishes[gi].activity += 20;
+            this.dishes[gi].quantity += 39;
+          }
+        }
+        this._log(`疫区泥炭敷料: 移除${removedCount}组非骨卫兵，骨卫兵各+${20 * removedCount}活性+${39 * removedCount}数量`);
+      },
+
+      // [38] 诱虫剂 - 添加4组蛊虫；每超出1组，已有蛊虫+10活性+15数量
+      38: function (targets) {
+        let overflowCount = 0;
+        for (let i = 0; i < 4; i++) {
+          const result = this._addMonster(SPECIES.GUCHONG, randomRarity());
+          if (result === -1) {
+            overflowCount++;
+          }
+        }
+        // 每超出1组，使已有蛊虫+10活性+15数量
+        if (overflowCount > 0) {
+          const guchongDishes = this._getDishesBySpecies(SPECIES.GUCHONG);
+          for (const idx of guchongDishes) {
+            this.dishes[idx].activity += 10 * overflowCount;
+            this.dishes[idx].quantity += 15 * overflowCount;
+          }
+          this._log(`诱虫剂: ${overflowCount}组超出，已有蛊虫各+${10 * overflowCount}活性+${15 * overflowCount}数量`);
+        }
+        this._log(`诱虫剂: 添加了${4 - overflowCount}组蛊虫，${overflowCount}组超出`);
+      },
+
+      // [39] 至纯圣水 - 所有觉醒者觉醒高2阶，已是首领则变异为随机首领觉醒者
+      39: function (targets) {
+        const jxzDishes = this._getDishesBySpecies(SPECIES.JUEXINGZHE);
+        if (jxzDishes.length === 0) return;
+        for (const idx of jxzDishes) {
+          const m = this.dishes[idx];
+          if (!m) continue;
+          const fromRarity = m.rarity;
+          if (fromRarity === RARITY.BOSS) {
+            // 已是首领：变异为随机种群的首领觉醒者（保持觉醒者+首领，+120活性）
+            m.activity += 120;
+            this._log(`至纯圣水: ${idx + 1}号首领觉醒者变异为随机首领觉醒者(+120活性)`);
+          } else {
+            // 觉醒高2阶，活性只增加1次120点
+            const currentIdx = RARITY_ORDER.indexOf(fromRarity);
+            const targetIdx = Math.min(currentIdx + 2, RARITY_ORDER.length - 1);
+            const targetRarity = RARITY_ORDER[targetIdx];
+            m.rarity = targetRarity;
+            m.activity += 120; // 只增加1次120点
+            this._logEvent(EVENT_TYPE.AWAKEN, {
+              dishIndex: idx,
+              fromRarity,
+              toRarity: targetRarity,
+              activityBonus: 120
+            });
+            this._log(`至纯圣水: ${idx + 1}号觉醒者 ${RARITY_NAMES[fromRarity]}→${RARITY_NAMES[targetRarity]} (+120活性)`);
+          }
+        }
       }
-      // 药剂箱(33-35)在_handlePotionSelectAction中特殊处理
+      // 药剂箱(33-34)在_handlePotionSelectAction中特殊处理
     };
   }
 
@@ -1218,7 +1340,7 @@ class GameEngine {
         break;
       }
 
-      // [2] 孵化囊 - ≥2组蛊虫时，每次添加怪物，全体+45活性
+      // [2] 孵化囊 - ≥2组蛊虫时，每次添加怪物，全体+45数量
       case 2: {
         const guchongCount = this._getDishesBySpecies(SPECIES.GUCHONG).length;
         if (guchongCount < 2) break;
@@ -1226,10 +1348,10 @@ class GameEngine {
         if (addEvents.length === 0) break;
         for (const _e of addEvents) {
           for (const idx of this._getNonEmptyDishIndices()) {
-            this.dishes[idx].activity += 45;
+            this.dishes[idx].quantity += 45;
           }
         }
-        this._log(`[孵化囊] ${addEvents.length}次添加事件，全体+${45 * addEvents.length}活性`);
+        this._log(`[孵化囊] ${addEvents.length}次添加事件，全体+${45 * addEvents.length}数量`);
         break;
       }
 
