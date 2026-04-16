@@ -327,6 +327,12 @@ const POTIONS = [
     isBox: true, boxSize: 3,
     description: '包含3支随机药剂（不含药剂箱）'
   },
+  {
+    id: 40, name: '药剂箱（小）', potionRarity: 'rare',
+    targetType: 'box', minTargets: 0, maxTargets: 0,
+    isBox: true, boxSize: 3,
+    description: '包含3支随机药剂（不含药剂箱）'
+  },
 
   // ---------- 至臻药剂 (Supreme Potions) ----------
   {
