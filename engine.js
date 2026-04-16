@@ -1645,12 +1645,12 @@ class GameEngine {
         break;
       }
 
-      // [23] 二度降生者之喙 - 2组怪物则添加1组；6组则最高吞噬最低
+      // [23] 二度降生者之喙 - 2-5组怪物则添加1组；6组则最高吞噬最低
       case 23: {
         const count = this._getNonEmptyDishIndices().length;
-        if (count === 2) {
+        if (count >= 2 && count <= 5) {
           this._addMonster(randomSpecies(), randomRarity());
-          this._log(`[二度降生者之喙] 仅2组怪物，添加新怪物`);
+          this._log(`[二度降生者之喙] ${count}组怪物（2-5组），添加新怪物`);
         } else if (count === 6) {
           const highest = this._getHighestTotalDish();
           const lowest = this._getLowestTotalDish();
